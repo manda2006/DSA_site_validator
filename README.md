@@ -29,3 +29,26 @@ Validator est une application web construite avec Django et Tailwind CSS. Le pro
 ```bash
 git clone https://github.com/votre-utilisateur/validator.git
 cd validator
+```
+## Environment and dependencies installation
+```
+python -m venv .venv
+.venv\Scripts\activate
+.venv\Scripts\python -m pip install -r requirements.txt
+python manage.py tailwind install
+```
+
+# Deployment in development
+bash 01 : 
+```
+.venv\Scripts\activate
+cd validator
+python manage.py tailwind start
+```
+bash 02 :
+```
+.venv\Scripts\activate
+cd validator
+python manage.py runserver
+
+```
