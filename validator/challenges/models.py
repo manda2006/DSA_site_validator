@@ -16,6 +16,16 @@ class Challenge(models.Model):
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='Medium')
     difficulty = models.IntegerField(default=1, choices=[(i, i) for i in range(1, 6)])  # Level field with choices 1 to 5
     published = models.BooleanField(default=False)
+    bonus_message = models.TextField(null=True, blank=True) 
+
+    def all_files_resolved_by_user(self, user):
+        # Récupérer tous les fichiers définis pour ce challenge
+        defined_files = DefinedFile.objects.filter(level__challenge=self)
+
+        # Vérifier si l'utilisateur a résolu tous ces fichiers
+        resolved_files = Performance.objects.filter(user=user, definedfile__in=defined_files, solved=True)
+
+        return resolved_files.count() == defined_files.count()
     
 
     def save(self, *args, **kwargs):
