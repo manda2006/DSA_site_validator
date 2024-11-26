@@ -20,19 +20,21 @@ def fetch_defined_files(request, challenge_slug):
 
 @login_required
 def challenge_detail(request, challenge_slug=None):
-    user = request.user  # Obtenez l'utilisateur actuel
+    user = request.user
     if challenge_slug:
-        defined_files = DefinedFile.objects.filter(level__challenge__slug=challenge_slug).order_by('name')
-        test_results = {defined_file.id : defined_file.get_test_result_for_user(request) for defined_file in defined_files}
         challenge = get_object_or_404(Challenge, slug=challenge_slug)
+        defined_files = DefinedFile.objects.filter(level__challenge=challenge).order_by('name')
+        test_results = {defined_file.id: defined_file.get_test_result_for_user(request) for defined_file in defined_files}
         levels = Level.objects.filter(challenge=challenge).order_by('name')
         result = 'Upload your file first'
-        if request.method == 'POST' :
-            
+
+        # Vérifier si l'utilisateur a résolu tous les fichiers du challenge
+        all_resolved = challenge.all_files_resolved_by_user(user)
+
+        if request.method == 'POST':
             uploaded_file = request.FILES.get('uploaded_file')
             if uploaded_file:
                 uploaded_content = uploaded_file.read().decode('utf-8')
-
                 defined_file_name = request.POST.get('defined_file_name', None)
 
                 if defined_file_name:
@@ -41,28 +43,44 @@ def challenge_detail(request, challenge_slug=None):
                         defined_content = defined_file.output_file.read().decode('utf-8')
 
                         if uploaded_content == defined_content:
-                            performance = Performance.objects.create(user=user, definedfile=defined_file, solved=True)
+                            # Create a Performance record
+                            Performance.objects.create(user=user, definedfile=defined_file, solved=True)
+
+                            # Check if all files are resolved
+                            all_resolved = challenge.all_files_resolved_by_user(user)
                             result = 'VALID'
+                            bonus_message = challenge.bonus_message if all_resolved else None
                         else:
                             result = 'INVALID'
-
+                            bonus_message = None
                     except DefinedFile.DoesNotExist:
-                        result = f'INVALID (No defined file named {defined_file_name} found for challenge : {challenge.name})'
-                    
-                    
+                        result = f'INVALID (No defined file named {defined_file_name} found for challenge: {challenge.name})'
+                        bonus_message = None
                 else:
                     result = 'INVALID (No defined file name provided)'
-            
+                    bonus_message = None
             else:
                 result = 'INVALID (No file uploaded)'
-            return JsonResponse({'result': result})
+                bonus_message = None
 
-        return render(request, 'challenges/challenge_detail.html', {'defined_files': defined_files, 'challenge': challenge, 'levels': levels, 'user': user, 'test_results': test_results})
+            # Return result and bonus message in JSON
+            return JsonResponse({'result': result, 'bonus_message': bonus_message})
 
-    # Handle case when challenge name is not provided
-    else:
-        # Add logic here if needed
-        return render(request, 'challenges/challenge_list.html', {'challenges': Challenge.objects.all(), 'user': user})
+
+        return render(request, 'challenges/challenge_detail.html', {
+            'defined_files': defined_files,
+            'challenge': challenge,
+            'levels': levels,
+            'user': user,
+            'test_results': test_results,
+            'all_resolved': all_resolved,  # Passer l'état de validation
+        })
+
+    return render(request, 'challenges/challenge_list.html', {
+        'challenges': Challenge.objects.all(),
+        'user': user
+    })
+
 
 @login_required
 def challenge_list(request):

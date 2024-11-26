@@ -8,21 +8,27 @@
     {% tailwind_css %}
 </head>
 <body>
-    <nav class="bg-blue-500 text-white p-4 flex justify-between items-center">
-        <div class="text-xl font-bold">Validator</div>
+    <nav class="bg-white text-gray-800 shadow-md px-4 py-1 flex justify-between items-center">
+
+            <a href="{% url 'challenge_list' %}" class="text-xl font-bold hover:underline text-gray-900">
+                Validator
+            </a>
+
+
+        <img src="{% static 'img/logo_dsa.jpg' %}" alt="Logo" class="w-32 aspect-auto rounded-full px-4">
+        
         <div class="flex items-center gap-4">
-            <span class="font-medium">{{ user.username }}</span>
+            <span class="font-medium text-gray-800">Team : {{ user.username }}</span>
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
-                <button type="submit" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
-                    Déconnexion
+                <button type="submit" class="bg-red-800 hover:bg-red-600 text-white px-4 py-2 rounded">
+                    Logout
                 </button>
             </form>
         </div>
     </nav>
     <main class="p-8">
         {% block content %}
-        
 
         {% endblock content %}
     </main>

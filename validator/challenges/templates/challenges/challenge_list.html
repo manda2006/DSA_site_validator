@@ -8,7 +8,7 @@
     
     {% if messages %}
         {% for message in messages %}
-            <div class="container-fluid px-3 mt-3">
+            <div class="container px-3 mt-3">
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
                     <div class="bg-yellow-300 text-yellow-800 p-4 rounded-lg shadow-md">
                         {{ message }}
@@ -38,9 +38,7 @@
                             </td>
                             <td class="text-center py-2 px-4">{{ challenge.category }}</td>
                             <td class="text-center py-2 px-4">
-                                <figure class="my-1">
-                                    <span role="img" aria-labelledby="rating-6636663adb9b6" class="bg-blue-400 h-2 rounded-full inline-block" style="width: {{ challenge.difficulty }}%"></span>
-                                </figure>
+                                {{challenge.difficulty}}
                             </td>
                             <td class="text-center py-2 px-4">{{ challenge.num_resolved_defined_files }}/{{ challenge.num_defined_files }}</td>
                         </tr>
@@ -50,6 +48,6 @@
         </table>
     </div>
 
-    <script src="{% static 'js/jquery.min.js' %}"></script>
+    
     
 {% endblock content %}

@@ -2,16 +2,29 @@
 {% load static %}
 {% load custom_filters %}
 {% block content %}
+<style>
+    /* Styles pour les résultats VALID */
+    .result.valid {
+        color: green;
+    }
+
+    /* Styles pour les résultats inconnus (?) */
+    .result.unknown {
+        color: black;
+    }
+</style>
 <script src="{% static 'js/jquery.min.js' %}"></script>
 <script>
     $(document).ready(function () {
+        // Fonction pour comparer les fichiers
         function compareFiles(definedFileName, uploadedFile, resultSpan, compareBtn) {
             var formData = new FormData();
             formData.append('defined_file_name', definedFileName);
             formData.append('uploaded_file', uploadedFile);
-
+        
+            // Get CSRF token
             var csrftoken = getCookie('csrftoken');
-
+        
             $.ajax({
                 url: '',
                 type: 'POST',
@@ -22,36 +35,45 @@
                     xhr.setRequestHeader("X-CSRFToken", csrftoken);
                 },
                 success: function (data) {
-                    if (data.result=="VALID"){
-                        $(resultSpan).css('color', 'green');
-                        $(resultSpan).text(data.result);
-                        $(compareBtn).prop('disabled', true);
-                        $(compareBtn).css('text-decoration', 'line-through');
-                        $(compareBtn).addClass('btn-outline-secondary');
+                    // Update the result span
+                    if (data.result === "VALID") {
+                        $(resultSpan)
+                            .removeClass('text-red-500')
+                            .addClass('text-green-500')
+                            .text(data.result);
+        
+                        $(compareBtn)
+                            .prop('disabled', true)
+                            .removeClass('bg-green-500 hover:bg-green-600')
+                            .addClass('bg-gray-300 text-gray-500 line-through');
+                    } else {
+                        $(resultSpan)
+                            .removeClass('text-green-500')
+                            .addClass('text-red-500')
+                            .text(data.result);
                     }
-                    else{
-                        $(resultSpan).css('color', 'red');
-                        $(resultSpan).text(data.result);
+        
+                    // Check for bonus message and display it
+                    if (data.bonus_message) {
+                        // Check if the bonus message div already exists
+                        var bonusDiv = $('#bonusMessage');
+                        if (bonusDiv.length === 0) {
+                            // Create and append the bonus message div
+                            bonusDiv = $('<div id="bonusMessage" class="bg-green-100 text-green-800 p-4 mt-6 rounded-md shadow"></div>');
+                            $('body').append(bonusDiv); // Adjust the placement as needed
+                        }
+                        bonusDiv.html(`<h3 class="text-lg font-semibold">Congratulations!</h3><p>${data.bonus_message}</p>`);
+
                     }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error submitting file:', error);
                 }
             });
-
-            setTimeout(function() {
-                $.ajax({
-                    url: '/{ challenge.slug }/get_user_rank/',
-                    type: 'GET',
-                    success: function(data) {
-                        $('#user-rank').html('Your rank : '+data.rank+'/'+data.total_user+' <i class="bi-info-circle ms-1"></i>');
-                        $('#user-score').text('Your score : ' + data.score);
-                        $('#user-category').html('Your category : <span class="ms-1 fw-bold">'+data.category+'</span>');
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error fetching user rank:', error);
-                    }
-                });
-            }, 1000);
         }
-
+        
+    
+        // Fonction pour récupérer le token CSRF
         function getCookie(name) {
             var cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -66,147 +88,166 @@
             }
             return cookieValue;
         }
-
+    
+        // Gestionnaire d'événements pour les boutons de comparaison
         $('.compareBtn').on('click', function () {
             var definedFileName = $(this).data('defined-file-name');
-            var uploadedFile = $(this).closest('.col').prev('.col-4').find('.fileInput')[0].files[0];
-            var resultSpan = $(this).closest('.col').next('.col').find('.result');
+            var uploadedFile = $(this).closest('.grid').find('.fileInput')[0].files[0];
+            var resultSpan = $(this).closest('.grid').find('.result');
+    
+            if (!uploadedFile) {
+                alert("Veuillez sélectionner un fichier avant de continuer.");
+                return;
+            }
+    
             compareFiles(definedFileName, uploadedFile, resultSpan, this);
         });
-
-        $('.level-link').on('click', function(e) {
+    
+        // Gestionnaire d'événements pour les liens de niveau
+        $('.level-link').on('click', function (e) {
             e.preventDefault();
-            $('.level-link').removeClass('active');
-            $(this).addClass('active');
-
+    
+            // Supprimez la classe active de tous les liens
+            $('.level-link').removeClass('bg-blue-200 text-blue-800');
+            $(this).addClass('bg-blue-200 text-blue-800');
+    
             var levelId = $(this).data('level-id');
-            $('.downloads').hide();
-            $('.downloads[data-level-id="' + levelId + '"]').show();
-            $('.defined-files-container').hide();
-            $('.defined-files-container[data-level-id="' + levelId + '"]').show();
+    
+            // Cachez toutes les sections "downloads" et "defined-files-container"
+            $('.downloads').addClass('hidden');
+            $('.defined-files-container').addClass('hidden');
+    
+            // Affichez la section correspondante
+            $('.downloads[data-level-id="' + levelId + '"]').removeClass('hidden');
+            $('.defined-files-container[data-level-id="' + levelId + '"]').removeClass('hidden');
+    
+            // Sauvegarder le niveau sélectionné dans localStorage
             localStorage.setItem('lastLevelId', levelId);
         });
-
+    
+        // Restaurez le niveau sélectionné à partir de localStorage
         var lastLevelId = localStorage.getItem('lastLevelId');
         if (lastLevelId) {
             $('.level-link[data-level-id="' + lastLevelId + '"]').click();
         } else {
+            // Si aucun niveau n'est sélectionné, cliquez sur le premier lien
             $('.level-link:first').click();
         }
     });
+    
 </script>
 
-<div class="shadow bg-[#051934] text-white p-3 px-4">
+<div class="shadow container mx-auto px-4 py-3 text-white bg-blue-900">
     <div class="flex justify-between items-center">
-        <h2 class="text-2xl font-bold">{{ challenge.name }}</h2>
-        <div class="flex items-center mx-3">
-            <h4>Category: {{ challenge.category }}</h4>
-        </div>
-        <div class="flex items-center mx-3">
-            <h4>Difficulty:</h4>
-        </div>
-        <div class="mx-2">
-            <figure class="notation" style="margin-top: 5px; margin-bottom: -5px">
-                <span role="img" style="width: {{ challenge.difficulty }}%" class="bg-blue-400 h-2 rounded-full inline-block"></span>
-            </figure>
+        <h2 class="text-xl font-bold">{{ challenge.name }}</h2>
+        <div class="flex space-x-6">
+            <h4 class="text-lg">Category: {{ challenge.category }}</h4>
+            <div class="flex items-center space-x-2">
+                <h4 class="text-lg">Difficulty: {{ challenge.difficulty }}</h4>
+                <figure class="notation">
+                    <span role="img" class="block bg-gray-400 h-2 rounded" style="width: {{ challenge.difficulty }}%;"></span>
+                </figure>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="container-fluid mt-6">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="col-span-1 p-1">
-            <div class="card bg-white shadow-lg">
-                <div class="card-header">
-                    <h3 class="text-lg font-semibold">Levels</h3>
-                </div>
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush">
-                        {% for level in levels %}
-                            <a href="#" class="level-link list-group-item list-group-item-action p-2 hover:bg-gray-200" data-level-id="{{ level.id }}">{{ level.name }}</a>
-                        {% endfor %}
-                    </ul>
-                </div>
+<div class="container mx-auto mt-6">
+    <div class="flex flex-wrap">
+        <div class="w-full md:w-1/4 lg:w-1/6 p-2">
+            <div class="bg-white shadow rounded-md p-4">
+                <h3 class="text-lg font-semibold mb-4">Levels</h3>
+                <ul class="space-y-2">
+                    {% for level in levels %}
+                        <a href="#" class="block px-3 py-2 rounded-md hover:bg-blue-100 level-link" data-level-id="{{ level.id }}">{{ level.name }}</a>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
-
-        <div class="col-span-2 p-1">
+        
+        <div class="w-full md:w-3/4 lg:w-5/6 p-2">
             {% for level in levels %}
-            <div class="downloads card bg-white shadow-lg m-3" data-level-id="{{ level.id }}" style="display: none;">
-                <div class="card-header">
-                    <h3 class="text-lg font-semibold">Downloads</h3>
-                </div>
-                <div class="card-body">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div>
-                            <h5 class="font-semibold">{{ level.name }} description</h5>
-                            {% if level.description_file %}
-                                <a href="{{ level.description_file.url }}" download>
-                                    <button type="button" class="btn bg-gray-200 text-black hover:bg-gray-300">
-                                        <i class="bi-file-pdf me-1"></i> Download Description File
-                                    </button>
-                                </a>
-                            {% else %}
-                                <p>No description file available.</p>
-                            {% endif %}
-                        </div>
-                        <div>
-                            <h5 class="font-semibold">Input files</h5>
-                            {% if level.input_file %}
-                                <a href="{{ level.input_file.url }}" download>
-                                    <button type="button" class="btn bg-gray-200 text-black hover:bg-gray-300">
-                                        <i class="bi-file-zip me-1"></i> Download Input Files
-                                    </button>
-                                </a>
-                            {% else %}
-                                <p>No input file available.</p>
-                            {% endif %}
-                        </div>
+            <div class="downloads hidden bg-white shadow rounded-md p-4" data-level-id="{{ level.id }}">
+                <h3 class="text-lg font-semibold mb-4">Downloads</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h5 class="font-medium">Description</h5>
+                        {% if level.description_file %}
+                            <a href="{{ level.description_file.url }}" download>
+                                <button type="button" class="btn px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md">
+                                    Download Description File
+                                </button>
+                            </a>
+                        {% else %}
+                            <p>No description file available.</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h5 class="font-medium">Input Files</h5>
+                        {% if level.input_file %}
+                            <a href="{{ level.input_file.url }}" download>
+                                <button type="button" class="btn px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md">
+                                    Download Input Files
+                                </button>
+                            </a>
+                        {% else %}
+                            <p>No input file available.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
             {% endfor %}
 
-            <div class="solutions card bg-white shadow-lg m-3">
-                <div class="card-header">
-                    <h3 class="text-lg font-semibold">Solution submit</h3>
+            <div class="solutions bg-white shadow rounded-md p-4">
+                <h3 class="text-lg font-semibold mb-4">Solution Submit</h3>
+                <div id="definedFileForm">
+                    <!-- Form content dynamically updated -->
                 </div>
-                <div class="card-body">
-                    <div id="definedFileForm"></div>
-                    {% for level in levels %}
-                    <div class="defined-files-container" data-level-id="{{ level.id }}" style="display: none;">
-                        {% for defined_file in level.defined_files.all|dictsort:"name" %}
-                            <div class="defined-file p-2 bg-gray-100 rounded mb-3">
-                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                    <div class="col-span-1">
-                                        {% if defined_file.input_file %}
-                                            <a href="{{ defined_file.input_file.url }}" download type="button" class="btn bg-gray-200 text-black hover:bg-gray-300">
-                                                <i class="bi-file-text me-1"></i>{{ defined_file.filename }}
-                                            </a>
-                                        {% else %}
-                                            <p>No input file available.</p>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-span-2">
-                                        <input class="fileInput w-full py-2 px-3 border border-gray-300 rounded" type="file" name="uploaded_file" accept=".txt">
-                                    </div>
-                                    <div class="col-span-1">
-                                        <button type="button" class="compareBtn btn bg-green-500 text-white hover:bg-green-600" data-defined-file-name="{{ defined_file.name }}">
-                                            Test {{ defined_file.name }}
+                {% for level in levels %}
+                <div class="defined-files-container hidden space-y-4" data-level-id="{{ level.id }}">
+                    {% for defined_file in level.defined_files.all|dictsort:"name" %}
+                    <div class="defined-file p-4 border rounded-md">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                            <div>
+                                {% if defined_file.input_file %}
+                                    <a href="{{ defined_file.input_file.url }}" download>
+                                        <button type="button" class="btn px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md">
+                                            {{ defined_file.filename }}
                                         </button>
-                                    </div>
-                                    <div class="col-span-1">
-                                        <span class="result">{{ test_results|get_item:defined_file.id }}</span>
-                                    </div>
-                                </div>
+                                    </a>
+                                {% else %}
+                                    <p>No input file available.</p>
+                                {% endif %}
                             </div>
-                        {% endfor %}
+                            <div>
+                                <input type="file" class="form-control fileInput w-full" name="uploaded_file" accept=".txt">
+                            </div>
+                            <div>
+                                <button type="button"
+                                        class="compareBtn px-4 py-2 rounded bg-green-500 hover:bg-green-600 text-white {% if test_results|get_item:defined_file.id == 'VALID' %}bg-gray-300 text-gray-500 line-through{% endif %}"
+                                        data-defined-file-name="{{ defined_file.name }}"
+                                        {% if test_results|get_item:defined_file.id == 'VALID' %}disabled{% endif %}>
+                                    Test {{ defined_file.name }}
+                                </button>
+
+                            </div>
+                            <div>
+                                <span class="result">{{ test_results|get_item:defined_file.id }}</span>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
+                {% endfor %}
             </div>
         </div>
     </div>
+    <!-- Message de bonus -->
+    {% if all_resolved and challenge.bonus_message %}
+    <div class="bg-green-100 text-green-800 p-4 mt-6 rounded-md shadow">
+        <h3 class="text-lg font-semibold">Congratulations!</h3>
+        <p>{{ challenge.bonus_message }}</p>
+    </div>
+    {% endif %}
 </div>
-
 {% endblock content %}
