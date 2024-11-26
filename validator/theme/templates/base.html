@@ -1,19 +1,30 @@
-{% load static tailwind_tags %}
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-    <title>Django Tailwind</title>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta http-equiv="X-UA-Compatible" content="ie=edge">
-		{% tailwind_css %}
-	</head>
+{% load static tailwind_tags %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accueil</title>
+    {% tailwind_css %}
+</head>
+<body>
+    <nav class="bg-blue-500 text-white p-4 flex justify-between items-center">
+        <div class="text-xl font-bold">Validator</div>
+        <div class="flex items-center gap-4">
+            <span class="font-medium">{{ user.username }}</span>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+                    Déconnexion
+                </button>
+            </form>
+        </div>
+    </nav>
+    <main class="p-8">
+        {% block content %}
+        
 
-	<body class="bg-gray-50 font-serif leading-normal tracking-normal">
-		<div class="container mx-auto">
-			<section class="flex items-center justify-center h-screen">
-				<h1 class="text-5xl">Django + Tailwind = ❤️</h1>
-			</section>
-		</div>
-	</body>
+        {% endblock content %}
+    </main>
+</body>
 </html>

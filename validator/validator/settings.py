@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     "tailwind",
     "accounts",
     'widget_tweaks',
+    "challenges",
 ]
 
 MIDDLEWARE = [
@@ -129,5 +131,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 TAILWIND_APP_NAME = 'theme'
 NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
-LOGIN_REDIRECT_URL = '/home/'  # URL de redirection après connexion
+LOGIN_REDIRECT_URL = '/challenges/'  # URL de redirection après connexion
 LOGOUT_REDIRECT_URL = '/'  # URL de redirection après déconnexion
+# Set the path to the directory where uploaded files will be stored.
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Define the URL prefix for media files.
+MEDIA_URL = '/media/'
