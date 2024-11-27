@@ -1,0 +1,3 @@
+docker build -t django-app .
+docker run -e DJANGO_SUPERUSER_USERNAME=admin -e DJANGO_SUPERUSER_EMAIL=admin@example.com -e DJANGO_SUPERUSER_PASSWORD=azertyUIOP123! -p 8000:80 django-app
+docker build --build-arg CACHE_BUST=$(date +%s) -t django-app .
