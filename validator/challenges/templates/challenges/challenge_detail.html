@@ -60,7 +60,7 @@
                         if (bonusDiv.length === 0) {
                             // Create and append the bonus message div
                             bonusDiv = $('<div id="bonusMessage" class="bg-green-100 text-green-800 p-4 mt-6 rounded-md shadow"></div>');
-                            $('body').append(bonusDiv); // Adjust the placement as needed
+                            $('#element-body').append(bonusDiv); // Adjust the placement as needed
                         }
                         bonusDiv.html(`<h3 class="text-lg font-semibold">Congratulations!</h3><p>${data.bonus_message}</p>`);
 
@@ -137,7 +137,7 @@
     
 </script>
 
-<div class="shadow container mx-auto px-4 py-3 text-white bg-blue-900">
+<div class="shadow container mx-auto px-4 py-3 text-white bg-blue-900" >
     <div class="flex justify-between items-center">
         <h2 class="text-xl font-bold">{{ challenge.name }}</h2>
         <div class="flex space-x-6">
@@ -152,7 +152,7 @@
     </div>
 </div>
 
-<div class="container mx-auto mt-6">
+<div class="container mx-auto mt-6" id="element-body">
     <div class="flex flex-wrap">
         <div class="w-full md:w-1/4 lg:w-1/6 p-2">
             <div class="bg-white shadow rounded-md p-4">
@@ -243,6 +243,7 @@
         </div>
     </div>
     <!-- Message de bonus -->
+    
     {% if all_resolved and challenge.bonus_message %}
     <div class="bg-green-100 text-green-800 p-4 mt-6 rounded-md shadow">
         <h3 class="text-lg font-semibold">Congratulations!</h3>
